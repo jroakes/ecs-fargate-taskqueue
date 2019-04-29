@@ -11,7 +11,7 @@ Hit a /tasks endpoint Lambda function with json body and Lambda will:
 
 ## Deploying
 
-1. `git clone https://github.com/jroakes/fargate-task-queue.git`
+1. `git clone https://github.com/jroakes/ecs-fargate-taskqueue.git`
 1. `pip install --upgrade -r requirements.txt`
 1. Move your Python project into the `/project` folder and run once to ensure all requirements are installed.
 1. Enter `cd project`
