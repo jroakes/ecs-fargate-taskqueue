@@ -69,7 +69,7 @@ Post the task details and retrieve task id.
 ### GET
 Keep polling to get the task result.
 
-**Endpoint**: https://XXXXXXXXXX.execute-api.us-east-1.amazonaws.com/Prod/tasks/<taskid>
+**Endpoint**: https://XXXXXXXXXX.execute-api.us-east-1.amazonaws.com/Prod/tasks/4b4f0b17-f2fd-4850-bf7e-172704156359
 
 ```
 {
