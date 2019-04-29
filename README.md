@@ -30,13 +30,13 @@ Hit a /tasks endpoint Lambda function with json body and Lambda will:
 ### POST
 Post the task details and retrieve task id.
 
-Endpoint: https://XXXXXXXXXX.execute-api.us-east-1.amazonaws.com/Prod/tasks
+**Endpoint**: https://XXXXXXXXXX.execute-api.us-east-1.amazonaws.com/Prod/tasks
 
-Request Body:
+**Request Body**:
 
-taskDefinition: Go to ECS > TaskDefinitions > <task-name> to ensure you are using the right version. Default: <AP_ECR_TASK>:1 Example: ecs-fargate-taskqueue-v4:1
-containerName: The name of your container deployed to ECR.  Default: <AP_ECR_TASK> Example: ecs-fargate-taskqueue-v4
-taskData: Object of expected values for your python project main function.  This is send in as a data dictionary.
+* **taskDefinition**: Go to ECS > TaskDefinitions > <task-name> to ensure you are using the right version. Default: <AP_ECR_TASK>:1 Example: ecs-fargate-taskqueue-v4:1
+* **containerName**: The name of your container deployed to ECR.  Default: <AP_ECR_TASK> Example: ecs-fargate-taskqueue-v4
+* **taskData**: Object of expected values for your python project main function.  This is send in as a data dictionary.
 
 ```
 
@@ -55,7 +55,7 @@ taskData: Object of expected values for your python project main function.  This
 
 ```
 
-Result:
+**Result**:
 
 ```
 {
@@ -69,13 +69,13 @@ Result:
 ### GET
 Keep polling to get the task result.
 
-Endpoint: https://XXXXXXXXXX.execute-api.us-east-1.amazonaws.com/Prod/tasks/<taskid>
+**Endpoint**: https://XXXXXXXXXX.execute-api.us-east-1.amazonaws.com/Prod/tasks/<taskid>
 
 ```
 {
     "lastStatus": "PENDING",
     "healthStatus": "UNKNOWN",
-    "result": "Requested resource not found",
+    "result": "<errors, json, or filename from S3>",
     "taskid": "4b4f0b17-f2fd-4850-bf7e-172704156359",
     "status": "ok"
 }
@@ -93,11 +93,16 @@ Endpoint: https://XXXXXXXXXX.execute-api.us-east-1.amazonaws.com/Prod/tasks/<tas
 * https://gist.github.com/rupakg/52f98fb95e3a8fe8e495dbff9c2fd14d
 
 
-## Confused?
+## Confused or Questions?
 * Check `https://console.aws.amazon.com/ecs/home?region=us-east-1#/clusters/default/tasks` to see the logs of your ECR containers.
 * Use the Lambda Test Events to POST body json (escaped) to your /task endpoint. Use the `Amazon API Gateway AWS Proxy` as a template.
+* Each time you run `./build.sh` the TaskDefinition name version is incremented by 1.  So If you have tried to deploy twice and are receiving errors from Lambda, change the `taskDefinition` value from, for example, `ecs-fargate-taskqueue-v4:1` to `ecs-fargate-taskqueue-v4:2`.
+* Deleting everything: `aws cloudformation delete-stack --stack-name <AP_ECR_TASK>` Example:`aws cloudformation delete-stack --stack-name ecs-fargate-taskqueue-v4`
 
 
-# TODO:
+## TODO:
 1. Get Task ID in container for save to dynamodb. (done)
 1. Standardize the call to lambda including task definition and env variables (done)
+1. Better reporting to output the correct task definition after build. (I don't know how to do this well.  Pull request?)
+1. Separate into `deploy with lambda` and `deply without lambda` build scripts as the Lambda function can be used for any task.
+1. Would like to have the lambda function create the DB record so that we have a persistent record incase ECR launch fails.  Currently the database is updated by the container handler function.
