@@ -1,0 +1,155 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+
+Parameters:
+
+  BucketName:
+    Type: String
+
+  DBName:
+    Type: String
+
+  SubNets:
+    Type: String
+
+Resources:
+
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - "ecs-tasks.amazonaws.com"
+          Action:
+          - "sts:AssumeRole"
+      Path: /
+      Policies:
+      - PolicyName: executionRolePolicy
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+              - 'ecr:GetAuthorizationToken'
+              - 'ecr:BatchCheckLayerAvailability'
+              - 'ecr:GetDownloadUrlForLayer'
+              - 'ecr:BatchGetImage'
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+            Resource: '*'
+
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - "ecs-tasks.amazonaws.com"
+          Action:
+          - "sts:AssumeRole"
+      Path: /
+      Policies:
+      - PolicyName: taskRolePolicy
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+              - s3:*
+              - dynamodb:*
+            Resource: '*'
+
+  Log:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Ref AWS::StackName
+
+
+  Task:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+      - Name: !Ref AWS::StackName
+        Environment:
+        - Name: 'AP_ECR_TASK'
+          Value: !Ref AWS::StackName
+        - Name: 'AP_AWS_REGION'
+          Value: !Ref AWS::Region
+        Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}:latest'
+        Essential: 'true'
+        LogConfiguration:
+          LogDriver: 'awslogs'
+          Options:
+            awslogs-group: !Ref Log
+            awslogs-region: !Ref AWS::Region
+            awslogs-stream-prefix: "ecs"
+        MemoryReservation: 4096
+      Cpu: 2048
+      ExecutionRoleArn:
+        Fn::GetAtt:
+        - ExecutionRole
+        - Arn
+      Family: !Ref AWS::StackName
+      Memory: 4096
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+      - FARGATE
+      TaskRoleArn:
+        Fn::GetAtt:
+        - TaskRole
+        - Arn
+
+  LambdaFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-tasklambda
+      Handler: index.lambda_handler
+      Runtime: python3.7
+      CodeUri: lambda/
+      Description: !Sub 'Lambda function to kick off ECS tasks. Part of ${AWS::StackName}'
+      MemorySize: 128
+      Timeout: 10
+      Policies:
+        - AWSLambdaFullAccess
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ecs:RunTask
+                - ecs:DescribeTasks
+                - ecs:StopTask
+              Resource:
+                - !Ref Task
+                - !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task/*
+        - Statement:
+            - Effect: Allow
+              Action:
+                - iam:PassRole
+              Resource:
+                - !GetAtt ExecutionRole.Arn
+                - !GetAtt TaskRole.Arn
+      Events:
+        GetTasks:
+          Type: Api
+          Properties:
+            Path: /tasks
+            Method: POST
+        CheckTasks:
+          Type: Api
+          Properties:
+            Path: /tasks/{proxy+}
+            Method: GET
+
+      Environment:
+        Variables:
+          AP_ECR_TASK: !Ref AWS::StackName
+          AP_AWS_REGION: !Ref AWS::Region
+          AP_SUBNETS: !Ref SubNets
+
+Outputs:
+  LambdaEndpoint:
+    Value:  !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/tasks'
+    Export:
+      Name: LambdaEndpoint
