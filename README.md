@@ -1,6 +1,6 @@
 # Fargate TaskQueue Boilerplate
 
-Uses AWS Lambda and Fargate for exposing an API for long running tasks. Provides the Python handler and helper code for packaging your container to receive data from environmental variables.  Easily deployable on existing long running Python code.  Results in a json response or S3 file URL.
+Uses Amazon AWS Lambda and Fargate for exposing an API for long running tasks. Provides the Python handler and helper code for packaging your container to receive data from environmental variables.  Easily deployable on existing long running Python code.  Results in a json response or S3 file URL.
 
 Hit a /tasks endpoint Lambda function with json body and Lambda will:
 * Create a task on Fargate using your container.
