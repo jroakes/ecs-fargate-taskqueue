@@ -34,7 +34,7 @@ Post the task details and retrieve task id.
 
 **Request Body**:
 
-* **taskDefinition**: Go to ECS > TaskDefinitions > <task-name> to ensure you are using the right version. Default: <AP_ECR_TASK>:1 Example: ecs-fargate-taskqueue-v4:1
+* **taskDefinition**: Go to ECS > TaskDefinitions > task-name to ensure you are using the right version. Default: <AP_ECR_TASK>:1 Example: ecs-fargate-taskqueue-v4:1
 * **containerName**: The name of your container deployed to ECR.  Default: <AP_ECR_TASK> Example: ecs-fargate-taskqueue-v4
 * **taskData**: Object of expected values for your python project main function.  This is send in as a data dictionary.
 
@@ -105,4 +105,4 @@ Keep polling to get the task result.
 1. Standardize the call to lambda including task definition and env variables (done)
 1. Better reporting to output the correct task definition after build. (I don't know how to do this well.  Pull request?)
 1. Separate into `deploy with lambda` and `deply without lambda` build scripts as the Lambda function can be used for any task.
-1. Would like to have the lambda function create the DB record so that we have a persistent record incase ECR launch fails.  Currently the database is updated by the container handler function.
+1. Would like to have the lambda function create the DB record so that we have a persistent record in case ECR launch fails.  Currently the database is updated by the container handler function.
